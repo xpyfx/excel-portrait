@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民宿經營標籤分類表格</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        
+        .export-btn:hover {
+            background: #219a52;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+            table-layout: fixed;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border: 1px solid #fff;
+            word-wrap: break-word;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+            text-align: center;
+            word-wrap: break-word;
+        }
+        
+        .tag-cell {
+            background-color: #f8f9fa;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .tag-cell:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .empty-cell {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .category-header {
+            writing-mode: horizontal-tb;
+            height: 80px;
+            min-width: 120px;
+        }
+        
+        .subcategory-header {
+            writing-mode: horizontal-tb;
+            height: 60px;
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>民宿經營標籤分類表格</h1>
+        
+        <button class="export-btn" onclick="exportToExcel()">📊 匯出 Excel</button>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTags">0</div>
+                <div class="stat-label">總標籤數</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalCategories">9</div>
+                <div class="stat-label">主要分類</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="maxRows">0</div>
+                <div class="stat-label">最大列數</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="tagsTable">
+                <thead id="tableHead">
+                    <!-- 標題將由JavaScript生成 -->
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 表格內容將由JavaScript生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        const tagData = [
+            {
+                mainCategory: "創業動機與背景",
+                subCategories: [
+                    {
+                        name: "個人因素",
+                        tags: ["家庭因素", "從小接觸", "追求彈性", "個人個性", "自在", "不想做辦公室", "性格外向", "考慮隨父母", "過去回憶", "轉行", "沒有具體原因", "家裡有地", "不想浪費", "家人催促處理土地", "受家人影響", "結合興趣和賺錢", "喜歡與人聊天", "交朋友"]
+                    },
+                    {
+                        name: "市場機會",
+                        tags: ["民宿經營較自由", "自主管理", "看好市場趨勢", "評估和考量", "方便管理", "剛好符合市場需求", "當時市場比較單純", "交通便利是優勢", "小規模經營心態", "門檻不高的副業", "民宿風潮", "不算壞事", "趁趨勢加入", "成果良好", "雪隧開通成為契機", "宜蘭觀光人潮增加", "推估客源充足", "台北到宜蘭交通便利"]
+                    },
+                    {
+                        name: "地點與資源",
+                        tags: ["宜蘭很漂亮", "推廣宜蘭之美", "地點佳", "隧道開通", "宜蘭休閒風格", "地點優勢", "成功的建築", "生活機能", "運氣好", "非市中心", "環境清幽", "景點距離不遠", "開車的家庭方便"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "經營困難與挑戰",
+                subCategories: [
+                    {
+                        name: "市場挑戰",
+                        tags: ["淡季生意不好", "交通不便", "非假期時間，生意不好", "成本仍然在，但卻沒有利潤", "固定開銷存在", "困難很多", "經營民宿初期缺乏曝光", "為經營民宿感到焦慮", "感到無助", "早期網路不發達影響宣傳及曝光", "客源不足", "推廣的效果有限", "淡季客人變少"]
+                    },
+                    {
+                        name: "經營壓力",
+                        tags: ["對生活模式轉變的不適應", "初次接觸", "不以為然", "民宿不是輕鬆活", "假期忙碌", "其實很累", "無捷徑", "只有好與壞", "無法推卸責任", "夫妻老闆的責任", "承擔所有", "步步為營", "名聲的重要", "該有的不可或缺", "就算不是酒店，但成本也不低", "獨自處理所有的事務", "初期定價混亂", "預約安排不當導致過度忙碌"]
+                    },
+                    {
+                        name: "客戶問題",
+                        tags: ["遇到奧客", "與奧客溝通困難", "奧客的行為讓受訪者感到不解", "會將惡劣客人拉到黑名單", "顧客壓力", "住宿問題", "常常被投訴", "客人沒有注意音量", "與鄰居關係不好"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "問題解決與適應",
+                subCategories: [
+                    {
+                        name: "學習成長",
+                        tags: ["慢慢適應", "越來越上手", "沒有特定的解決辦法", "等待假期或國定假日", "等待", "順其自然", "近期生意才比較好轉", "邊做邊學累積經驗", "從摸索中成長", "實作中學習經營技能", "學網路上架的技巧", "自行製作民宿的宣傳內容", "覺得複雜", "姪女協助數位操作", "完成線上平台上架"]
+                    },
+                    {
+                        name: "服務改善",
+                        tags: ["良好的服務", "服務換客人(barter)", "依靠口碑", "廣告成本太高", "用心對待客人", "重視客人的需求", "獲得客人的稱讚", "客人推薦", "累積良好的口碑", "累積Google好評提升曝光", "客源逐漸穩定", "自認不擅長行銷", "學習他人經營方式", "經營不易"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "競爭與合作",
+                subCategories: [
+                    {
+                        name: "競爭態度",
+                        tags: ["剛開始的壓力感", "相互比較", "別人有，我們沒有", "競爭焦慮", "轉念思考", "兩者都有", "感受到競爭者的壓力", "擔心自己被比下去", "認同競爭", "競爭促進了進步", "競爭會帶來動力", "肯定競爭", "同行刺激創新"]
+                    },
+                    {
+                        name: "同業關係",
+                        tags: ["民宿聚集帶動人潮", "差異化經營", "同業合作", "良性競爭心態", "都是朋友", "經營模式，不影響", "影響不大", "客群是共用的", "關係良好", "互助而非競爭", "民宿業者關係良好", "良性競爭", "不惡性批評其他業者", "不講其他業者壞話", "都會互相鼓勵", "同行間分享交流", "彼此有提供建議或策略", "宜蘭人的熱情", "承認同業關係", "存在競爭的關係", "人情味的重要", "遇到問題時互相求助", "同行間樂於分享", "會定期聚會", "分享經營的資訊", "互相介紹客人", "業者主動轉介", "同行間彼此回饋轉介", "共享商機", "共同討論創新策略", "合作吸引目標客群", "人情味的重要性", "不會有勾心鬥角的心態", "會互相幫忙"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "客群分析與定位",
+                subCategories: [
+                    {
+                        name: "主要客群",
+                        tags: ["客群最多的是學生嗎", "以前中年人居多", "年輕人不習慣民宿", "近年學生變多", "瀏覽社群", "流量推薦", "推測推薦影片的目的", "經驗不足", "參考網路推薦", "受眾年齡降低，網路的影響", "主要客群為年輕人", "客群的年齡範圍為18歲到30歲區間", "客群類型為大學生群體居多", "朋友慶生活動", "客人開心業者就開心", "年輕人愛拍照", "民宿漂亮的重要性", "照片的重要性", "次要客群為家庭", "主力客群為年輕人", "年輕人喜愛輕鬆與美觀的環境", "年輕人都使用社群打卡", "年輕人會帶來宣傳效益", "對年輕人與網路行銷滿意", "進門馬上被吸引並拍照"]
+                    },
+                    {
+                        name: "客群特性",
+                        tags: ["家庭旅遊", "放鬆", "自由玩耍", "不造成壓力", "合適客群", "家長勞累", "毛小孩", "不同經營策略", "影響定位", "旺季？", "假期人多", "寒暑假最多客人", "學生沒時間", "父母那一代不太玩遊戲", "不會準備遊戲", "受客群影響", "適應客人喜好", "配合客群", "有迎合群眾的必要", "會上網", "看推薦", "與自身比較", "是否要參考"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "空間設計與設施",
+                subCategories: [
+                    {
+                        name: "空間規劃",
+                        tags: ["空間配置", "保留空間", "方便調整", "設施選擇多", "設計師很重要", "空間的改變", "空間的調整", "設計初期的不足", "網路影響，改變設計", "適應客群", "想讓客人住得舒服", "不喜歡太花俏的設計", "花俏的設計成本太高", "設計上採用簡單舒適的風格", "色調選擇偏柔和舒服的顏色", "睡覺空間一定要夠大", "不希望客人睡得擁擠", "客廳和餐廳比房間重要", "客人都會聚在一起吃飯聊天", "院子設計可以烤肉", "院子有設遮陽棚", "下雨天也能安心聚會", "宜蘭很常下雨", "每間房都有獨立的衛浴", "獨立衛浴使用比較方便", "男女共用衛浴會不便", "隔音也很重要", "多人一起住容易吵雜", "怕吵到鄰居會被客訴", "民宿一定要保持乾淨", "業者很用心將預備方案都想好了", "業者習慣宜蘭的天氣了"]
+                    },
+                    {
+                        name: "設施升級",
+                        tags: ["增加設施", "使用體驗良好", "反應熱烈", "分享熱烈迴響的作法", "有重新裝潢", "提升民宿的設計風格", "配合年輕人的喜好", "有請設計師進行配色", "設計方向為網美風", "將家具風格調整成年輕人", "很適合拍照", "升級娛樂設備吸引年輕人", "緊跟市場趨勢", "稱讚業者用心經營", "遊戲設備多元", "年輕人注重娛樂與體驗", "業者理解年輕人需求"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "行銷與宣傳",
+                subCategories: [
+                    {
+                        name: "傳統行銷",
+                        tags: ["初期靠口碑", "親友口耳相傳", "靠發傳單宣傳", "靠親友協助宣傳", "初期靠朋友宣傳", "靠親友幫忙宣傳", "印大量傳單到處發", "不要害羞", "連買菜都發傳單"]
+                    },
+                    {
+                        name: "數位行銷",
+                        tags: ["訂房網站", "Line溝通", "未於社群媒體宣傳", "能見度低", "聯絡方法", "不懂宣傳", "沒時間經營", "依靠客人口碑及宣傳", "口碑較重要", "嘗試社群媒體", "目前足夠", "請客人寫Google評論", "好評能夠帶動客源", "年輕人都使用IG", "跟上社群平台趨勢", "自己產出IG內容", "融入年輕族群的風格", "KOL被吸引", "網紅幫忙拍開箱影片", "學習使用小紅書與抖音", "舉辦活動促銷", "用打卡或發文換優惠", "能曝光就曝光", "管道越多越好"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "服務理念與客戶關係",
+                subCategories: [
+                    {
+                        name: "服務理念",
+                        tags: ["目標明確", "足夠的休息", "環境放鬆", "不影響別人", "想法簡單", "不擔心壓力", "遠離繁忙", "沒設定行程", "舒適的空間", "享受旅行", "放鬆心情", "目標效果明確", "初衷很單純", "讓客人好好休息好好玩", "讓客人體驗宜蘭生活", "非常休閒", "酒店隔音不好", "酒店風格差不多", "像回到阿嬤家", "跟朋友開心玩", "跟朋友一起烤肉", "跟朋友聊天", "可以看星星", "不用這麼辛苦", "工作辛苦", "工作壓力大", "放鬆很幸福", "要好好享受", "始終都沒變", "開開心心回家", "不要太累", "心情會變好", "台北看不到星星", "店家早打烊", "宜蘭沒有光害", "宜蘭晚上沒有人出門", "找不到便利商店"]
+                    },
+                    {
+                        name: "客戶服務",
+                        tags: ["客人感受", "交給認識的人", "節省時間", "適合家庭休息", "度過放鬆的時間", "布置效果極佳", "有眼光", "空間實用、美感好", "溫馨又現代", "放鬆", "離不開", "設計滿意", "創意及專業高", "內裝舒適", "讓客人有回到家的感覺", "不是住民宿而是朋友家", "會照顧客人", "準備薑茶及熱水袋", "客人感動", "推薦好吃好玩給客人", "體驗人情味", "服務不好不會有人住", "一定要乾淨", "人情味很重要", "主動關心客人", "主動跟客人聊天", "送客人離開", "詢問客人意見", "哪裡可以做更好", "請客人評論", "一般人都不會主動詢問", "一般人會彆扭、不敢問"]
+                    }
+                ]
+            },
+            {
+                mainCategory: "未來發展與轉型",
+                subCategories: [
+                    {
+                        name: "轉型考量",
+                        tags: ["沒有轉型的想法", "看過案例", "轉型失敗", "浪費時間", "浪費金錢", "轉換風格", "未達預期", "倒閉", "不能輕易嘗試", "保守", "保持穩定", "熟悉", "更新", "運營流暢", "不會轉型", "沒有想法", "看情況再決定"]
+                    },
+                    {
+                        name: "擴展計畫",
+                        tags: ["游泳池", "溜滑梯", "咖啡廳", "目前以民宿為主", "會擴展", "在經營一棟", "渡假風民宿", "慢慢規劃", "不能著急", "會負債", "怕被媽媽打", "不能衝動", "未來可以做的事", "希望可以成功", "可能會請工讀生", "沒有合作經驗", "有在規劃", "宜蘭農場多", "想與農場合作", "體驗餵小動物", "門票優惠", "更多人去觀光"]
+                    }
+                ]
+            }
+        ];
+
+        function generateTable() {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            let totalTags = 0;
+            
+            // 創建表頭
+            const headerRow1 = document.createElement('tr');
+            const headerRow2 = document.createElement('tr');
+            
+            // 收集所有子分類和其標籤
+            let allColumns = [];
+            tagData.forEach(category => {
+                category.subCategories.forEach(subCategory => {
+                    allColumns.push({
+                        mainCategory: category.mainCategory,
+                        subCategory: subCategory.name,
+                        tags: subCategory.tags
+                    });
+                    totalTags += subCategory.tags.length;
+                });
+            });
+            
+            // 創建主分類標題
+            let currentMainCategory = '';
+            let mainCategorySpan = 0;
+            
+            allColumns.forEach((col, index) => {
+                if (col.mainCategory !== currentMainCategory) {
+                    if (mainCategorySpan > 0) {
+                        const mainCategoryHeader = document.createElement('th');
+                        mainCategoryHeader.textContent = currentMainCategory;
+                        mainCategoryHeader.colSpan = mainCategorySpan;
+                        mainCategoryHeader.className = 'category-header';
+                        headerRow1.appendChild(mainCategoryHeader);
+                    }
+                    currentMainCategory = col.mainCategory;
+                    mainCategorySpan = 1;
+                } else {
+                    mainCategorySpan++;
+                }
+                
+                // 如果是最後一個
+                if (index === allColumns.length - 1) {
+                    const mainCategoryHeader = document.createElement('th');
+                    mainCategoryHeader.textContent = currentMainCategory;
+                    mainCategoryHeader.colSpan = mainCategorySpan;
+                    mainCategoryHeader.className = 'category-header';
+                    headerRow1.appendChild(mainCategoryHeader);
+                }
+            });
+            
+            // 創建子分類標題
+            allColumns.forEach(col => {
+                const subCategoryHeader = document.createElement('th');
+                subCategoryHeader.textContent = col.subCategory;
+                subCategoryHeader.className = 'subcategory-header';
+                headerRow2.appendChild(subCategoryHeader);
+            });
+            
+            thead.appendChild(headerRow1);
+            thead.appendChild(headerRow2);
+            
+            // 找出最長的標籤列表長度
+            const maxRows = Math.max(...allColumns.map(col => col.tags.length));
+            
+            // 創建數據行
+            for (let row = 0; row < maxRows; row++) {
+                const dataRow = document.createElement('tr');
+                
+                allColumns.forEach(col => {
+                    const cell = document.createElement('td');
+                    if (row < col.tags.length) {
+                        cell.textContent = `【${col.tags[row]}】`;
+                        cell.className = 'tag-cell';
+                    } else {
+                        cell.textContent = '';
+                        cell.className = 'empty-cell';
+                    }
+                    dataRow.appendChild(cell);
+                });
+                
+                tbody.appendChild(dataRow);
+            }
+            
+            // 更新統計數據
+            document.getElementById('totalTags').textContent = totalTags;
+            document.getElementById('maxRows').textContent = maxRows;
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            // 準備數據
+            const allColumns = [];
+            tagData.forEach(category => {
+                category.subCategories.forEach(subCategory => {
+                    allColumns.push({
+                        mainCategory: category.mainCategory,
+                        subCategory: subCategory.name,
+                        tags: subCategory.tags
+                    });
+                });
+            });
+            
+            const maxRows = Math.max(...allColumns.map(col => col.tags.length));
+            
+            // 創建工作表數據
+            const wsData = [];
+            
+            // 第一行：主分類
+            const mainCategoryRow = [];
+            let currentMainCategory = '';
+            let spanCount = 0;
+            
+            allColumns.forEach((col, index) => {
+                if (col.mainCategory !== currentMainCategory) {
+                    // 填充之前的空格
+                    for (let i = 0; i < spanCount; i++) {
+                        if (i === 0 && currentMainCategory) {
+                            mainCategoryRow.push(currentMainCategory);
+                        } else {
+                            mainCategoryRow.push('');
+                        }
+                    }
+                    currentMainCategory = col.mainCategory;
+                    spanCount = 1;
+                } else {
+                    spanCount++;
+                }
+                
+                // 最後一個分類
+                if (index === allColumns.length - 1) {
+                    for (let i = 0; i < spanCount; i++) {
+                        if (i === 0) {
+                            mainCategoryRow.push(currentMainCategory);
+                        } else {
+                            mainCategoryRow.push('');
+                        }
+                    }
+                }
+            });
+            
+            wsData.push(mainCategoryRow);
+            
+            // 第二行：子分類
+            const subCategoryRow = allColumns.map(col => col.subCategory);
+            wsData.push(subCategoryRow);
+            
+            // 數據行
+            for (let row = 0; row < maxRows; row++) {
+                const dataRow = allColumns.map(col => {
+                    return row < col.tags.length ? `【${col.tags[row]}】` : '';
+                });
+                wsData.push(dataRow);
+            }
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // 合併主分類單元格
+            const merges = [];
+            let colIndex = 0;
+            currentMainCategory = '';
+            let startCol = 0;
+            
+            allColumns.forEach((col, index) => {
+                if (col.mainCategory !== currentMainCategory) {
+                    if (currentMainCategory && colIndex > startCol) {
+                        merges.push({
+                            s: { r: 0, c: startCol },
+                            e: { r: 0, c: colIndex - 1 }
+                        });
+                    }
+                    currentMainCategory = col.mainCategory;
+                    startCol = colIndex;
+                }
+                colIndex++;
+                
+                if (index === allColumns.length - 1 && colIndex > startCol) {
+                    merges.push({
+                        s: { r: 0, c: startCol },
+                        e: { r: 0, c: colIndex - 1 }
+                    });
+                }
+            });
+            
+            ws['!merges'] = merges;
+            
+            // 設定欄寬
+            const colWidths = allColumns.map(() => ({ width: 15 }));
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, '民宿經營標籤分類');
+            XLSX.writeFile(wb, '民宿經營標籤分類表_橫向排列.xlsx');
+        }
+
+        // 初始化表格
+        generateTable();
+    </script>
+</body>
+</html>
